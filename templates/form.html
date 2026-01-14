@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Sender</title>
+    <style>
+        body {
+            background: linear-gradient(to right, #ffffff, #007BFF);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 350px;
+        }
+        input, select, button {
+            margin: 10px;
+            padding: 10px;
+            width: 80%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Send WhatsApp Message</h2>
+
+        <form action="/upload" method="POST" onsubmit="return validateForm()">
+            <input type="text" id="name" name="name" placeholder="Enter Name (optional)">
+            <input type="text" id="phone" name="phone" placeholder="Enter Phone Number (optional)">
+
+            <select name="template" required>
+                <option value="" disabled selected>Select Template</option>
+                {% for template in template_names %}
+                    <option value="{{ template }}">{{ template }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Number count dropdown -->
+            <select name="number_count" required>
+                <option value="" disabled selected>Select Status Code</option>
+                {% for i in range(0, 401) %}
+                    <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Send Message</button>
+
+            <a href="{{ url_for('logout') }}">
+                <button type="button">Logout</button>
+            </a>
+        </form>
+    </div>
+
+    <script>
+        function validateForm() {
+            const phone = document.getElementById("phone").value;
+            const count = document.querySelector('select[name="number_count"]').value;
+
+            if (!count && (!phone || isNaN(phone) || phone.length !== 10)) {
+                alert("Please select number count or enter a valid 10-digit phone number.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

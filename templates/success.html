@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Sent</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
+            width: 400px;
+        }
+        .checkmark {
+            font-size: 60px;
+            color: #10b981;
+        }
+        h2 {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+        p {
+            color: #d1d5db;
+        }
+        .home-btn {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .home-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkmark">✔</div>
+        <h2>Message Sent Successfully!</h2>
+        <p>Your message has been delivered to <strong>{{ recipient }}</strong> via WhatsApp.</p>
+        <!-- <a href="{{ url_for('form') }}">
+            <button>Send Another</button>
+        </a> -->
+        <button class="home-btn" onclick="window.location.href='/form'">Send Another</button>
+    </div>
+</body>
+</html>

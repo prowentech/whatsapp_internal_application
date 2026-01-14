@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Results</title>
+</head>
+<body>
+    <h2>Message Sending Results</h2>
+    <ul>
+        {% for result in results %}
+            <li>{{ result }}</li>
+        {% endfor %}
+    </ul>
+    <a href="/form">Back to Form</a>
+</body>
+</html>

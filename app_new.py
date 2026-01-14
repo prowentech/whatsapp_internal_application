@@ -1,0 +1,313 @@
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+import requests
+from sqlalchemy.exc import OperationalError
+from sqlalchemy import text
+import pandas as pd
+import io
+
+app = Flask(__name__)
+app.secret_key = "secret_key_1"
+
+dbname = 'postgres'
+user = 'Prowentech'
+password = 'Prowentech*1712'
+host = 'hotel-analytics-us.ctqoeusy8cuj.us-east-1.rds.amazonaws.com'
+port = '5432'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+try:
+    with app.app_context():
+        db.session.execute(text("SELECT 1"))
+        print("✅ Database connection successful!")
+except OperationalError as e:
+    print("❌ Database connection failed!")
+    print(e)
+
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQQPwoJmard2sss2MljPSvKAjcnf1RP9fUknkkHv9a8ktNkzqtbU2JqBVK3ypP65WW22Qx5ZBOhYsuPeyooXABFBzUd1pkSf7hKweiZCNcNGTbeAUHefEl5j2yrZCVEZB1MZB0QZBZAcO3KfxkluhpJEXSZBdJhjIBWKzhmZBIpYthpXyfUeaAb8w2St4jJzgyETvrUG2022HmO9iA7dL7dwQ7ZC8vF24bUGH6aLIADZBYNlGEf9PyM6p4VO3XyQyRpZA48M78mv6d0ZBajdRZA'
+PHONE_NUMBER_ID = '562935203577701'
+VERIFY_TOKEN = 'prowen_secret_key'
+TEMPLATE_NAMES = ['hotel_analytics_video']
+
+
+
+# User model
+class User(db.Model):
+    __tablename__ = 'users'
+    __table_args__ = {'schema':'watzap'}
+    uid = db.Column(db.BigInteger, primary_key=True)
+    user_name = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
+
+
+
+
+
+        
+
+
+
+
+# Login page
+@app.route("/", methods=["GET"])
+def login_page():
+    return render_template("login.html")
+        
+        
+# Login endpoint
+@app.route("/login", methods=["POST"])
+def login():
+    try:
+        data = request.get_json()
+        print(data)
+        user_name = data.get('user_name', '').strip()
+        print("user :",user_name)
+        password = data.get('password', '').strip()
+        print("password :",password)
+        user = User.query.filter_by(user_name=user_name).first()
+        print("USER :",user)
+        # if user and check_password_hash(user.password, password):
+        if str(user.password) == password:
+            session['user_id'] = user.uid
+            return jsonify({"message": "Login successful"}), 200
+
+        return jsonify({"message": "Invalid credentials"}), 401
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_lineno)
+        
+        
+        
+        
+# WhatsApp form page
+@app.route("/form", methods=["GET"])
+def form():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    return render_template("form.html",template_names=TEMPLATE_NAMES)
+
+
+import psycopg2
+import time
+def get_db_connection():
+    # Retrieve credentials from environment variables for security
+    conn = psycopg2.connect(
+        host='hotel-analytics-us.ctqoeusy8cuj.us-east-1.rds.amazonaws.com',
+        database='postgres',
+        user="Prowentech",
+        password="Prowentech*1712"
+    )
+    return conn
+
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    print("-----")
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    
+    print(request.form)
+
+    selected_template = request.form.get("template")
+    status = request.form.get("number_count")
+    
+    print(selected_template)
+    print(status)
+
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(('SELECT name, mobile FROM watzap.hotel_watzap_input WHERE status_code = %s;'),(status,))
+        
+        data = cur.fetchall()
+        
+        print(data)
+        
+        
+
+        for name, mobile in data:
+            if not mobile.isdigit() or len(mobile) != 10:
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 500 WHERE mobile = %s"),(mobile,))
+                continue
+
+            json_data = {
+                "messaging_product": "whatsapp",
+                "to": f"91{mobile}",
+                "type": "template",
+                "template": {
+                    "name": selected_template,
+                    "language": {
+                    "code": "en"
+                    },
+                    "components": [
+                    {
+                        "type": "header",
+                        "parameters": [
+                        {
+                            "type": "video",
+                            "video": {
+                            "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/Prowen+hotel+analytics+video.mp4"
+                            }
+                        }
+                        ]
+                    },
+                    {
+                        "type": "body",
+                        "parameters": [
+                        {
+                            "type": "text",
+                            "text": name
+                        }
+                        ]
+                    }
+                    ]
+                }
+                }
+
+            url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
+            headers = {
+                "Authorization": f"Bearer {ACCESS_TOKEN}",
+                "Content-Type": "application/json"
+            }
+
+            res = requests.post(url, headers=headers, json=json_data)
+            print("response :",res.text)
+            print(res.status_code)
+            print("------------------------------")
+            time.sleep(1.5)
+            if res.status_code == 200:
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 200 WHERE mobile = %s"),(mobile,))
+            else:
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 400 WHERE mobile = %s"),(mobile,))
+        
+            conn.commit()
+        
+        return render_template("upload_result.html")
+
+    except Exception as e:
+        print(e)
+        print(e.__traceback__.tb_lineno)
+        return f"Failed to process file: {str(e)}", 500
+
+
+
+
+
+
+# WhatsApp message sending
+@app.route("/send", methods=["POST"])
+def send():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    recipient = request.form.get("phone")
+    selected_template = request.form.get("template")
+    print("number",recipient)
+    if not recipient.isdigit() or len(recipient) != 10:
+        return jsonify({"error": "Invalid 10-digit number"}), 400
+
+    if selected_template not in TEMPLATE_NAMES:
+        return jsonify({"error": "Invalid template selected"}), 400
+
+    url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    json_data = {
+      "messaging_product": "whatsapp",
+      "to": f"91{recipient}",
+      "type": "template",
+      "template": {
+        "name": selected_template,
+        "language": {
+          "code": "en"
+        },
+        "components": [
+          {
+            "type": "header",
+            "parameters": [
+              {
+                "type": "video",
+                "video": {
+                  "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/Prowen+hotel+analytics+video.mp4"
+                }
+              }
+            ]
+          },
+          {
+            "type": "body",
+            "parameters": [
+              {
+                "type": "text",
+                "text": "Valued Hotelier"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+    res = requests.post(url, headers=headers, json=json_data)
+    if res.status_code == 200:
+        return render_template("success.html", recipient=recipient)
+    else:
+        return f"<h3>Error {res.status_code}</h3><pre>{res.text}</pre>"
+
+
+
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+
+
+
+# Webhook endpoint
+@app.route("/webhook", methods=["GET", "POST"])
+def webhook():
+    if request.method == "GET":
+        mode = request.args.get("hub.mode")
+        token = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
+        print(challenge)
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        return "Verification failed", 403
+
+    elif request.method == "POST":
+        data = request.get_json()
+        print("Webhook received:", data)
+        
+        status = data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
+        number =  data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(("INSERT into watzap.hotel_webhook_insights(data) Values(%s)"),(data,))
+        
+        if status == 'sent':
+            cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
+        elif status == 'failed':
+            cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
+            
+        conn.commit()
+        
+        return "EVENT_RECEIVED", 200
+    
+
+
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

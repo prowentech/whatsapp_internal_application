@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Sender</title>
+    <style>
+        body {
+            background: linear-gradient(to right, #ffffff, #007BFF);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 300px;
+        }
+        input, select, button {
+            margin: 10px;
+            padding: 10px;
+            width: 80%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+    <script>
+        function validateForm() {
+            let phone = document.getElementById("phone").value;
+            if (phone.length !== 10 || isNaN(phone)) {
+                alert("Please enter a valid 10-digit number.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Send WhatsApp Message</h2>
+        <form action="/send" method="POST" onsubmit="return validateForm()">
+            <input type="text" id="phone" name="phone" placeholder="Enter Phone Number" required>
+
+            <select name="template" required>
+                <option value="" disabled selected>Select Template</option>
+                {% for template in template_names %}
+                    <option value="{{ template }}">{{ template }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Send Message</button>
+            <a href="{{ url_for('logout') }}">
+                <button type="button">Logout</button>
+            </a>
+        </form>
+    </div>
+</body>
+</html>
