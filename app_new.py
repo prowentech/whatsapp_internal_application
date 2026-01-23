@@ -416,11 +416,8 @@ def send_reply_message():
         data = request.get_json()
         message = data.get("message")
         to_phone = data.get("to_phone")
-        print(message)
-        # print(to_phone)
         
         PHONE_NUMBER_ID = '562935203577701'
-        to_phone = "9659231806"
 
         payload = {
                     "messaging_product": "whatsapp",
@@ -459,5 +456,5 @@ def send_reply_message():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-    # app.run(debug=False)
+    # app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=False)
