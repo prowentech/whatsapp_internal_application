@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -29,12 +31,10 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQQPwoJmard2sss2MljPSvKAjcnf1RP9fUknkkHv9a8ktNkzqtbU2JqBVK3ypP65WW22Qx5ZBOhYsuPeyooXABFBzUd1pkSf7hKweiZCNcNGTbeAUHefEl5j2yrZCVEZB1MZB0QZBZAcO3KfxkluhpJEXSZBdJhjIBWKzhmZBIpYthpXyfUeaAb8w2St4jJzgyETvrUG2022HmO9iA7dL7dwQ7ZC8vF24bUGH6aLIADZBYNlGEf9PyM6p4VO3XyQyRpZA48M78mv6d0ZBajdRZA'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQjPWaZA7mplPAr5V5dUBNOUwf38mpgz6qMAqS5gF8av7xTXTcL37abgBrZATHZBZCIocV58PCUy0v4ZCo3H4L4EUPuUiWw6ZCpuLPkJcPnTz51cVGh2o279WVczCepKAngJZCw5Rp5oDjioVaN1SC5kxARXVxZA4Y5XhKzUXKRZBKErZBZAVXxVoaVRtP8bvhB517txornJGKwQUJvTEhn1OqqbqxPWmiP8ldn5b6NDR4ZA4w2V1ROSTJNNrSsBcfJIZBYJyPttqpsY2lJshE7wZDZD'
 PHONE_NUMBER_ID = '562935203577701'
 VERIFY_TOKEN = 'prowen_secret_key'
-TEMPLATE_NAMES = ['hotel_analytics_video']
-
-
+TEMPLATE_NAMES = ['hotel_analytics_video','authentication_otp_template']
 
 # User model
 class User(db.Model):
@@ -44,21 +44,11 @@ class User(db.Model):
     user_name = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
 
-
-
-
-
-        
-
-
-
-
 # Login page
 @app.route("/", methods=["GET"])
 def login_page():
     return render_template("login.html")
-        
-        
+
 # Login endpoint
 @app.route("/login", methods=["POST"])
 def login():
@@ -81,9 +71,6 @@ def login():
         print(e)
         print(e.__traceback__.tb_lineno)
         
-        
-        
-        
 # WhatsApp form page
 @app.route("/form", methods=["GET"])
 def form():
@@ -103,7 +90,6 @@ def get_db_connection():
         password="Prowentech*1712"
     )
     return conn
-
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -128,8 +114,6 @@ def upload():
         data = cur.fetchall()
         
         print(data)
-        
-        
 
         for name, mobile in data:
             if not mobile.isdigit() or len(mobile) != 10:
@@ -195,11 +179,6 @@ def upload():
         print(e.__traceback__.tb_lineno)
         return f"Failed to process file: {str(e)}", 500
 
-
-
-
-
-
 # WhatsApp message sending
 @app.route("/send", methods=["POST"])
 def send():
@@ -261,17 +240,10 @@ def send():
     else:
         return f"<h3>Error {res.status_code}</h3><pre>{res.text}</pre>"
 
-
-
-
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
-
-
-
 
 # Webhook endpoint
 @app.route("/webhook", methods=["GET", "POST"])
@@ -294,7 +266,7 @@ def webhook():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        cur.execute(("INSERT into watzap.hotel_webhook_insights(data) Values(%s)"),(data,))
+        cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(data,number[2:]))
         
         if status == 'sent':
             cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
@@ -302,10 +274,51 @@ def webhook():
             cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
             
         conn.commit()
-        
         return "EVENT_RECEIVED", 200
-    
+
+
+
+
+@app.route("/messages", methods=["GET"])
+def show_numbers():
+    try:
+        print("inside method")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        select = "select recipient_number from watzap.test_webhook_insights where recipient_number is NOT NULL"
+        cur.execute(select)
+        number_data = cur.fetchall()
+        num_data = [t[0] for t in number_data]
+        print(num_data)
+        num_data = set(num_data)
+        print(num_data)
+        return list(num_data)
+    except Exception as E:
+        print(E)
+        print(E.__traceback__.tb_lineno)
+
+@app.route("/show_messages", methods=["POST"])
+def show_messages():
+    print("here in method")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        data = request.data.decode("utf-8")
+        js_data = json.loads(data)
+        recipient_number = js_data.get("recipient_number")
+        select = "select recipient_number, data from watzap.test_webhook_insights where recipient_number = '%s'"
+        cur.execute(select,(recipient_number,))
+        record = cur.fetchall()
+        for rec in record:
+            recipient = rec[0]
+            msg_data = rec[1]
+
+        return render_template('chat.html',record=record)
+
+    except Exception as E:
+        print(E)
+        print(E.__traceback__.tb_lineno)
 
 if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=5000, debug=True)
-    app.run(debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+    # app.run(debug=False)

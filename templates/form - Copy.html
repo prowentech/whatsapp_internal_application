@@ -14,29 +14,6 @@
             margin: 0;
             font-family: Arial, sans-serif;
         }
-
-        /* 🔹 Top-right button container */
-        .top-bar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 999;
-        }
-
-        .top-bar button {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .top-bar button:hover {
-            background: #1ebe5d;
-        }
-
         .container {
             background: #ffffff;
             padding: 20px;
@@ -45,7 +22,6 @@
             text-align: center;
             width: 350px;
         }
-
         input, select, button {
             margin: 10px;
             padding: 10px;
@@ -53,26 +29,18 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-
         button {
             background: #007BFF;
             color: white;
             cursor: pointer;
             border: none;
         }
-
         button:hover {
             background: #0056b3;
         }
     </style>
 </head>
 <body>
-
-    <!-- 🔹 Messages Button -->
-    <div class="top-bar">
-        <button onclick="goToMessages()">💬 Messages</button>
-    </div>
-
     <div class="container">
         <h2>Send WhatsApp Message</h2>
 
@@ -87,6 +55,7 @@
                 {% endfor %}
             </select>
 
+            <!-- Number count dropdown -->
             <select name="number_count" required>
                 <option value="" disabled selected>Select Status Code</option>
                 {% for i in range(0, 401) %}
@@ -112,10 +81,6 @@
                 return false;
             }
             return true;
-        }
-
-        function goToMessages() {
-            window.location.href = "/messages";
         }
     </script>
 </body>
