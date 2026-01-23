@@ -49,6 +49,11 @@ body {
   background: #e9edef;
 }
 
+.chat-item.active {
+  background: #d9fdd3;
+  font-weight: 600;
+}
+
 /* ===== Chat Area ===== */
 .chat-area {
   width: 70%;
@@ -68,6 +73,8 @@ body {
   padding: 20px;
   background: #efeae2;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
@@ -86,6 +93,24 @@ body {
 .sent {
   background: #d9fdd3;
   align-self: flex-end;
+  margin-left: auto;
+}
+
+.message-time {
+  font-size: 11px;
+  color: #667781;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.date-separator {
+  align-self: center;
+  background: #e1f3fb;
+  color: #54656f;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin: 10px 0;
 }
 
 /* ===== Input ===== */
@@ -123,19 +148,20 @@ body {
   <div class="sidebar">
     <div class="sidebar-header">WhatsApp</div>
     <div class="chat-list">
-      <div class="chat-item" onclick="openChat('John')">John</div>
-      <div class="chat-item" onclick="openChat('Support')">Support</div>
-      <div class="chat-item" onclick="openChat('Team')">Team</div>
+      {% for chat in chat_list %}
+      <div class="chat-item" onclick="openChat('{{ chat }}', this)">
+        {{ chat }}
+      </div>
+      {% endfor %}
     </div>
   </div>
 
   <!-- Chat Area -->
   <div class="chat-area">
-    <div class="chat-header" id="chatName">John</div>
+    <div class="chat-header" id="chatName">Select a chat</div>
 
     <div class="messages" id="messages">
-      <div class="message received">Hi 👋</div>
-      <div class="message sent">Hello! How are you?</div>
+      <div class="message received">Click a chat to load messages 👋</div>
     </div>
 
     <div class="input-box">
@@ -147,25 +173,108 @@ body {
 </div>
 
 <script>
-function sendMessage() {
-  const input = document.getElementById("msgInput");
-  if (input.value.trim() === "") return;
+let currentRecipient = "";
 
-  const msg = document.createElement("div");
-  msg.className = "message sent";
-  msg.innerText = input.value;
+/* ===== Load chat ===== */
+function openChat(recipient, element) {
+  currentRecipient = recipient;
+  document.getElementById("chatName").innerText = recipient;
 
-  document.getElementById("messages").appendChild(msg);
-  input.value = "";
-  document.getElementById("messages").scrollTop =
-    document.getElementById("messages").scrollHeight;
+  document.querySelectorAll(".chat-item").forEach(i =>
+    i.classList.remove("active")
+  );
+  element.classList.add("active");
+
+  fetch("/show_messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipient_number: recipient })
+  })
+  .then(res => res.json())
+  .then(data => renderMessages(data.messages));
 }
 
-function openChat(name) {
-  document.getElementById("chatName").innerText = name;
-  document.getElementById("messages").innerHTML = `
-    <div class="message received">Welcome to ${name} chat 👋</div>
+/* ===== Render messages ===== */
+function renderMessages(messages) {
+  const msgBox = document.getElementById("messages");
+  msgBox.innerHTML = "";
+  let lastDate = "";
+
+  messages.forEach(msg => {
+    const dateObj = new Date(msg.time);
+
+    const dateLabel = dateObj.toLocaleDateString([], {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+
+    const timeLabel = dateObj.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    if (dateLabel !== lastDate) {
+      const dateDiv = document.createElement("div");
+      dateDiv.className = "date-separator";
+      dateDiv.innerText = dateLabel;
+      msgBox.appendChild(dateDiv);
+      lastDate = dateLabel;
+    }
+
+    const div = document.createElement("div");
+    div.className = "message " + (msg.client ? "received" : "sent");
+
+    div.innerHTML = `
+      <div>${msg.text}</div>
+      <div class="message-time">${timeLabel}</div>
+    `;
+
+    msgBox.appendChild(div);
+  });
+
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+/* ===== Send message ===== */
+function sendMessage() {
+  const input = document.getElementById("msgInput");
+  const text = input.value.trim();
+  if (!text || !currentRecipient) return;
+
+  // 🔥 current time in REQUIRED FORMAT
+  const now = new Date();
+  const isoTime =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0") + "T" +
+    String(now.getHours()).padStart(2, "0") + ":" +
+    String(now.getMinutes()).padStart(2, "0") + ":" +
+    String(now.getSeconds()).padStart(2, "0") + "." +
+    String(now.getMilliseconds()).padStart(6, "0");
+
+  const msgBox = document.getElementById("messages");
+
+  const div = document.createElement("div");
+  div.className = "message sent";
+  div.innerHTML = `
+    <div>${text}</div>
+    <div class="message-time">${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
   `;
+  msgBox.appendChild(div);
+  msgBox.scrollTop = msgBox.scrollHeight;
+
+  input.value = "";
+
+  fetch("/send/reply/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: text,
+      to_phone: currentRecipient,
+      time: isoTime
+    })
+  });
 }
 </script>
 

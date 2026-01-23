@@ -31,7 +31,7 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQjPWaZA7mplPAr5V5dUBNOUwf38mpgz6qMAqS5gF8av7xTXTcL37abgBrZATHZBZCIocV58PCUy0v4ZCo3H4L4EUPuUiWw6ZCpuLPkJcPnTz51cVGh2o279WVczCepKAngJZCw5Rp5oDjioVaN1SC5kxARXVxZA4Y5XhKzUXKRZBKErZBZAVXxVoaVRtP8bvhB517txornJGKwQUJvTEhn1OqqbqxPWmiP8ldn5b6NDR4ZA4w2V1ROSTJNNrSsBcfJIZBYJyPttqpsY2lJshE7wZDZD'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQtVMYrZAGfTGAqDKVD6JAenFsKgsP2p8zzjHZAZC2RYu8MGAjzsL76ZBToEUJROIvZBuJbZC00LbLhtxNNFTkFICTZBlvufK8suucpzDu1UZBW1t6slRZAdZCZBhojeq2EUkPc33YZAHFnjlZCReOiJljZAIO1nRP2O7ZB0LSIpp8ZA0hEgs2ZCjmLX0DastEO29kJRi37xKr3udbkDraHnSK4Lr5rNeagsPVrT5ClznMqHjMsOg3p91x07GbZByZCbAZAs5A8zxMuZAIL2q0HCyuVBXy'
 PHONE_NUMBER_ID = '562935203577701'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_analytics_video','authentication_otp_template']
@@ -289,35 +289,174 @@ def show_numbers():
         cur.execute(select)
         number_data = cur.fetchall()
         num_data = [t[0] for t in number_data]
-        print(num_data)
         num_data = set(num_data)
-        print(num_data)
-        return list(num_data)
+        num_data = list(num_data)
+    
+        return render_template(
+            "chat.html",
+            chat_list=num_data
+        )
+
     except Exception as E:
         print(E)
         print(E.__traceback__.tb_lineno)
+
+
+
+# @app.route("/show_messages", methods=["POST"])
+# def show_messages():
+#     print("here in method")
+#     try:
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+#         data = request.data.decode("utf-8")
+#         js_data = json.loads(data)
+#         recipient_number = js_data.get("recipient_number")
+#         print("--->",recipient_number)
+#         select = "select data from watzap.test_webhook_insights where recipient_number = %s"
+#         cur.execute(select,(recipient_number,))
+#         y = cur.fetchall()
+        
+#         messages = []
+#         for i in y:
+#             x = json.loads(i[0])
+#             try:
+#                 messages.append(x["data"]["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"])
+#             except:
+#                 pass
+#         print(messages)
+#         return render_template('chat.html',record=messages)
+
+#     except Exception as E:
+#         print(E)
+#         print(E.__traceback__.tb_lineno)
+        
+        
+
+import re
+from datetime import datetime
+
+
+def combine_and_sort_messages(client_messages, our_messages):
+    combined = client_messages + our_messages
+    combined.sort(key=lambda x: datetime.fromisoformat(x["time"]))
+    return combined
+
+
+
 
 @app.route("/show_messages", methods=["POST"])
 def show_messages():
-    print("here in method")
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        data = request.data.decode("utf-8")
-        js_data = json.loads(data)
+
+        js_data = request.get_json()
         recipient_number = js_data.get("recipient_number")
-        select = "select recipient_number, data from watzap.test_webhook_insights where recipient_number = '%s'"
-        cur.execute(select,(recipient_number,))
-        record = cur.fetchall()
-        for rec in record:
-            recipient = rec[0]
-            msg_data = rec[1]
+        print("Recipient:", recipient_number)
 
-        return render_template('chat.html',record=record)
+        query = """
+            SELECT data
+            FROM watzap.test_webhook_insights
+            WHERE recipient_number = %s
+            ORDER BY id
+        """
+        cur.execute(query, (recipient_number,))
+        rows = cur.fetchall()
 
+        messages = []
+        
+        
+        query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
+        cur.execute(query_ours,(recipient_number,))
+        rows_ours = cur.fetchall()
+        
+        
+        our_message = [json.loads(i[0]) for i in rows_ours]
+        print("------>",type(rows_ours))
+        
+        # our_message = [{"text": "Okay! Thank You","time": "2025-05-07T01:38:01.209756","client":False},{"text":"Ok","time": "2025-05-09T03:26:01.209756","client":False}]
+
+        for row in rows:
+            payload = json.loads(row[0])
+
+            try:
+                text = (
+                    payload["data"]["entry"][0]["changes"][0]
+                    ["value"]["messages"][0]["text"]["body"]
+                )
+
+                messages.append({
+                    "text": text,
+                    "time":payload["timestamp"],
+                    "client":True
+                })
+            except:
+                pass
+            
+        
+        all_messages  = combine_and_sort_messages(messages, our_message)
+        
+        print(all_messages)
+
+        return jsonify({
+            "messages": all_messages
+        })
+
+    except Exception as e:
+        print("ERROR:", e)
+        return jsonify({"messages": []}), 500
+        
+        
+        
+        
+@app.route("/send/reply/messages", methods=["POST"])    
+def send_reply_message():
+    try:
+        data = request.get_json()
+        message = data.get("message")
+        to_phone = data.get("to_phone")
+        print(message)
+        # print(to_phone)
+        
+        PHONE_NUMBER_ID = '562935203577701'
+        to_phone = "9659231806"
+
+        payload = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": to_phone,
+                    "type": "text",
+                    "text": {
+                        "preview_url": False,
+                        "body": message
+                    }
+                }
+
+        url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
+
+        headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}",
+            "Content-Type": "application/json"
+        }
+
+        res = requests.post(url, headers=headers, json=payload)
+        # print("response :",res.text)
+        if int(res.status_code) == 200:
+            data = {"text":message,"time":datetime.now().isoformat(),"client":False}
+            conn = get_db_connection()
+            cur = conn.cursor()
+            query_insert = "INSERT into watzap.test_webhook_insights_prowen(data,recipient_number) VALUES(%s,%s)"
+            cur.execute(query_insert,(json.dumps(data),to_phone))
+            conn.commit()
+            return jsonify({"messages": "success"}), 200
+        else:
+            jsonify({"error": "something went wrong"}), 400
     except Exception as E:
         print(E)
         print(E.__traceback__.tb_lineno)
+        
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
