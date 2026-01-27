@@ -395,7 +395,7 @@ def show_messages():
 
             try:
                 text = (
-                    payload["data"]["entry"][0]["changes"][0]
+                    payload["entry"][0]["changes"][0]
                     ["value"]["messages"][0]["text"]["body"]
                 )
 
