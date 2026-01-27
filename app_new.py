@@ -262,8 +262,9 @@ def webhook():
             data = request.get_json()
             print("Webhook received:", data)
             
-            status = data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
-            number =  data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
+            
+            status = data["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
+            number =  data["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
             conn = get_db_connection()
             cur = conn.cursor()
             
@@ -280,7 +281,7 @@ def webhook():
         print(E)
         print(E.__traceback__.tb_lineno)
         error = {E:E.__traceback__.tb_lineno}
-        return error,400
+        return str(error),400
 
 
 
