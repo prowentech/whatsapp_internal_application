@@ -268,7 +268,7 @@ def webhook():
             conn = get_db_connection()
             cur = conn.cursor()
             
-            cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(data,number[2:]))
+            cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
             
             if status == 'sent':
                 cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
