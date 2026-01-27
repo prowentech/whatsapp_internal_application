@@ -248,34 +248,39 @@ def logout():
 # Webhook endpoint
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    if request.method == "GET":
-        mode = request.args.get("hub.mode")
-        token = request.args.get("hub.verify_token")
-        challenge = request.args.get("hub.challenge")
-        print(challenge)
-        if mode == "subscribe" and token == VERIFY_TOKEN:
-            return challenge, 200
-        return "Verification failed", 403
+    try:
+        if request.method == "GET":
+            mode = request.args.get("hub.mode")
+            token = request.args.get("hub.verify_token")
+            challenge = request.args.get("hub.challenge")
+            print(challenge)
+            if mode == "subscribe" and token == VERIFY_TOKEN:
+                return challenge, 200
+            return "Verification failed", 403
 
-    elif request.method == "POST":
-        data = request.get_json()
-        print("Webhook received:", data)
-        
-        status = data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
-        number =  data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(data,number[2:]))
-        
-        if status == 'sent':
-            cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
-        elif status == 'failed':
-            cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
+        elif request.method == "POST":
+            data = request.get_json()
+            print("Webhook received:", data)
             
-        conn.commit()
-        return "EVENT_RECEIVED", 200
-
+            status = data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
+            number =  data["data"]["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
+            conn = get_db_connection()
+            cur = conn.cursor()
+            
+            cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(data,number[2:]))
+            
+            if status == 'sent':
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
+            elif status == 'failed':
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
+                
+            conn.commit()
+            return "EVENT_RECEIVED", 200
+    except Exception as E:
+        print(E)
+        print(E.__traceback__.tb_lineno)
+        error = {E:E.__traceback__.tb_lineno}
+        return error,400
 
 
 
