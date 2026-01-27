@@ -351,10 +351,21 @@ from datetime import datetime
 
 
 def combine_and_sort_messages(client_messages, our_messages):
-    combined = client_messages + our_messages
-    combined.sort(key=lambda x: datetime.fromisoformat(x["time"]))
-    return combined
-
+    try:
+        # combined = client_messages + our_messages
+        print("------------------------------------------------------")
+        print(client_messages)
+        print("------------------------------------------------------")
+        for item in client_messages:
+            epoch = int(item['time'])
+            item['time'] = datetime.fromtimestamp(epoch).isoformat()
+        combined = our_messages + client_messages
+        # print("combined---->",combined)
+        combined.sort(key=lambda x: datetime.fromisoformat(x["time"]))
+        return combined
+    except Exception as E:
+        print(E)
+        print(E.__traceback__.tb_lineno)
 
 
 
@@ -368,6 +379,13 @@ def show_messages():
         recipient_number = js_data.get("recipient_number")
         print("Recipient:", recipient_number)
 
+
+        messages = []
+        
+        
+        
+        # our_message = [{"text": "Okay! Thank You","time": "2025-05-07T01:38:01.209756","client":False},{"text":"Ok","time": "2025-05-09T03:26:01.209756","client":False}]
+        
         query = """
             SELECT data
             FROM watzap.hotel_webhook_insights
@@ -377,9 +395,29 @@ def show_messages():
         cur.execute(query, (recipient_number,))
         rows = cur.fetchall()
 
-        messages = []
-        
-        
+        for row in rows:
+            print("row ----------",row)
+            payload = json.loads(row[0])
+            print("payload --------",payload)
+            try:
+                text = (
+                    payload["entry"][0]["changes"][0]
+                    ["value"]["messages"][0]["text"]["body"]
+                )
+                time_stamp = payload["entry"][0]["changes"][0]["value"]["messages"][0]["timestamp"]
+                messages.append({
+                    "text": text,
+                    "time":time_stamp,
+                    "client":True
+                })
+            except Exception as E:
+                print(E)
+                print(E.__traceback__.tb_lineno)
+                pass
+        print("Message list ----------",messages)
+            
+            
+            
         query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
         cur.execute(query_ours,(recipient_number,))
         rows_ours = cur.fetchall()
@@ -387,27 +425,6 @@ def show_messages():
         
         our_message = [json.loads(i[0]) for i in rows_ours]
         print("------>",type(rows_ours))
-        
-        # our_message = [{"text": "Okay! Thank You","time": "2025-05-07T01:38:01.209756","client":False},{"text":"Ok","time": "2025-05-09T03:26:01.209756","client":False}]
-
-        for row in rows:
-            payload = json.loads(row[0])
-
-            try:
-                text = (
-                    payload["entry"][0]["changes"][0]
-                    ["value"]["messages"][0]["text"]["body"]
-                )
-
-                messages.append({
-                    "text": text,
-                    "time":payload["timestamp"],
-                    "client":True
-                })
-            except:
-                pass
-            
-        
         all_messages  = combine_and_sort_messages(messages, our_message)
         
         print(all_messages)
@@ -418,6 +435,7 @@ def show_messages():
 
     except Exception as e:
         print("ERROR:", e)
+        print(e.__traceback__.tb_lineno)
         return jsonify({"messages": []}), 500
         
         
@@ -470,4 +488,4 @@ def send_reply_message():
 
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", port=5000, debug=True)
-    app.run(debug=False)
+    app.run(debug=True)
