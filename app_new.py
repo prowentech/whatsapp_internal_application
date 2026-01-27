@@ -380,7 +380,7 @@ def show_messages():
         messages = []
         
         
-        query_ours = "SELECT data FROM watzap.hotel_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
+        query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
         cur.execute(query_ours,(recipient_number,))
         rows_ours = cur.fetchall()
         
@@ -456,7 +456,7 @@ def send_reply_message():
             data = {"text":message,"time":datetime.now().isoformat(),"client":False}
             conn = get_db_connection()
             cur = conn.cursor()
-            query_insert = "INSERT into watzap.hotel_webhook_insights_prowen(data,recipient_number) VALUES(%s,%s)"
+            query_insert = "INSERT into watzap.test_webhook_insights_prowen(data,recipient_number) VALUES(%s,%s)"
             cur.execute(query_insert,(json.dumps(data),to_phone))
             conn.commit()
             return jsonify({"messages": "success"}), 200
