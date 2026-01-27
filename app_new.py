@@ -262,18 +262,25 @@ def webhook():
             data = request.get_json()
             print("Webhook received:", data)
             
-            
-            status = data["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
-            number =  data["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
             conn = get_db_connection()
             cur = conn.cursor()
-            
-            cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
-            
-            if status == 'sent':
-                cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
-            elif status == 'failed':
-                cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
+            try:
+                status = data["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
+                number =  data["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
+                
+                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
+                
+                if status == 'sent':
+                    cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
+                elif status == 'failed':
+                    cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
+                    
+                
+            except:
+                number =  data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
+                status =  "reply"
+
+                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
                 
             conn.commit()
             return "EVENT_RECEIVED", 200
@@ -291,7 +298,7 @@ def show_numbers():
         print("inside method")
         conn = get_db_connection()
         cur = conn.cursor()
-        select = "select recipient_number from watzap.test_webhook_insights where recipient_number is NOT NULL"
+        select = "select recipient_number from watzap.hotel_webhook_insights where recipient_number is NOT NULL"
         cur.execute(select)
         number_data = cur.fetchall()
         num_data = [t[0] for t in number_data]
@@ -319,7 +326,7 @@ def show_numbers():
 #         js_data = json.loads(data)
 #         recipient_number = js_data.get("recipient_number")
 #         print("--->",recipient_number)
-#         select = "select data from watzap.test_webhook_insights where recipient_number = %s"
+#         select = "select data from watzap.hotel_webhook_insights where recipient_number = %s"
 #         cur.execute(select,(recipient_number,))
 #         y = cur.fetchall()
         
@@ -363,7 +370,7 @@ def show_messages():
 
         query = """
             SELECT data
-            FROM watzap.test_webhook_insights
+            FROM watzap.hotel_webhook_insights
             WHERE recipient_number = %s
             ORDER BY id
         """
@@ -373,7 +380,7 @@ def show_messages():
         messages = []
         
         
-        query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
+        query_ours = "SELECT data FROM watzap.hotel_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
         cur.execute(query_ours,(recipient_number,))
         rows_ours = cur.fetchall()
         
@@ -449,7 +456,7 @@ def send_reply_message():
             data = {"text":message,"time":datetime.now().isoformat(),"client":False}
             conn = get_db_connection()
             cur = conn.cursor()
-            query_insert = "INSERT into watzap.test_webhook_insights_prowen(data,recipient_number) VALUES(%s,%s)"
+            query_insert = "INSERT into watzap.hotel_webhook_insights_prowen(data,recipient_number) VALUES(%s,%s)"
             cur.execute(query_insert,(json.dumps(data),to_phone))
             conn.commit()
             return jsonify({"messages": "success"}), 200
