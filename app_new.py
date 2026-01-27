@@ -7,7 +7,7 @@ import requests
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text
 import pandas as pd
-import io
+import io    
 
 app = Flask(__name__)
 app.secret_key = "secret_key_1"
@@ -31,7 +31,7 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQtVMYrZAGfTGAqDKVD6JAenFsKgsP2p8zzjHZAZC2RYu8MGAjzsL76ZBToEUJROIvZBuJbZC00LbLhtxNNFTkFICTZBlvufK8suucpzDu1UZBW1t6slRZAdZCZBhojeq2EUkPc33YZAHFnjlZCReOiJljZAIO1nRP2O7ZB0LSIpp8ZA0hEgs2ZCjmLX0DastEO29kJRi37xKr3udbkDraHnSK4Lr5rNeagsPVrT5ClznMqHjMsOg3p91x07GbZByZCbAZAs5A8zxMuZAIL2q0HCyuVBXy'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQuZCZBp6g2J26YNZBor7DVdrqu6ARvkh1nCgDHEzQQKbjo1eCqVg1SLcNtSyN596ZCdZAXWoKMydbCgZAHe6zZBdnce2Jp26gZBmps9T2PchfMxicQSSd7ZBLVnttbj4iBffDw2ZA4TdXmS8TyHwACl4ouMRqXPOZA9Tlyf1w2RJNZBZC2wZBCoDnoMrr75GQOZC1lyZBgDOC0BZBpxTlZBZAnZCc80f8hX4mMB3E8ddGMTgQwvI1le07AUQAopFaAq6ZCBbrLC7pPqm0lqRaboWtqz3ozQZDZD'
 PHONE_NUMBER_ID = '562935203577701'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_analytics_video','authentication_otp_template']
@@ -172,7 +172,7 @@ def upload():
         
             conn.commit()
         
-        return render_template("upload_result.html")
+        return render_template("chat.html")
 
     except Exception as e:
         print(e)
@@ -438,7 +438,7 @@ def send_reply_message():
         }
 
         res = requests.post(url, headers=headers, json=payload)
-        # print("response :",res.text)
+        print("response :",res.text)
         if int(res.status_code) == 200:
             data = {"text":message,"time":datetime.now().isoformat(),"client":False}
             conn = get_db_connection()
