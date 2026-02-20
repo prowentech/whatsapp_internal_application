@@ -391,7 +391,7 @@ def webhook():
                 status = data["entry"][0]["changes"][0]["value"]["statuses"][0]["status"]
                 number =  data["entry"][0]["changes"][0]["value"]["statuses"][0]["recipient_id"]
                 
-                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
+                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:],status))
                 
                 if status == 'sent':
                     cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
@@ -403,7 +403,7 @@ def webhook():
                 number =  data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
                 status =  "reply"
 
-                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number) Values(%s,%s)"),(json.dumps(data),number[2:]))
+                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:]),status)
                 
             conn.commit()
             return "EVENT_RECEIVED", 200
@@ -438,35 +438,6 @@ def show_numbers():
         print(E.__traceback__.tb_lineno)
 
 
-
-# @app.route("/show_messages", methods=["POST"])
-# def show_messages():
-#     print("here in method")
-#     try:
-#         conn = get_db_connection()
-#         cur = conn.cursor()
-#         data = request.data.decode("utf-8")
-#         js_data = json.loads(data)
-#         recipient_number = js_data.get("recipient_number")
-#         print("--->",recipient_number)
-#         select = "select data from watzap.hotel_webhook_insights where recipient_number = %s"
-#         cur.execute(select,(recipient_number,))
-#         y = cur.fetchall()
-        
-#         messages = []
-#         for i in y:
-#             x = json.loads(i[0])
-#             try:
-#                 messages.append(x["data"]["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"])
-#             except:
-#                 pass
-#         print(messages)
-#         return render_template('chat.html',record=messages)
-
-#     except Exception as E:
-#         print(E)
-#         print(E.__traceback__.tb_lineno)
-        
         
 
 import re
@@ -523,7 +494,7 @@ def show_messages():
         query = """
             SELECT data
             FROM watzap.hotel_webhook_insights
-            WHERE recipient_number = %s and template_name = 'Replied' ORDER BY id
+            WHERE recipient_number = %s and template_name = 'reply' ORDER BY id
         """
         cur.execute(query, (recipient_number,))
         rows = cur.fetchall()
