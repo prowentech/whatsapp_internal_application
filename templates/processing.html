@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processing Campaign</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #ffffff, #007BFF);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #eee;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 20px;
+            width: 0%;
+            background: #25D366;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>Sending Campaign</h2>
+
+    <p>Total Numbers: <strong id="total">{{ total }}</strong></p>
+    <p>Sent: <strong id="sent">0</strong></p>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <p id="statusText">Processing...</p>
+</div>
+
+<script>
+
+    // Start sending
+    fetch("/start_sending", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            template: "{{ template }}",
+            status: "{{ status }}"
+        })
+    });
+
+    // Poll progress every second
+    const interval = setInterval(() => {
+        fetch("/progress")
+            .then(res => res.json())
+            .then(data => {
+
+                document.getElementById("sent").innerText = data.sent;
+
+                let percent = 0;
+                if (data.total > 0) {
+                    percent = (data.sent / data.total) * 100;
+                }
+
+                document.getElementById("progressFill").style.width = percent + "%";
+
+                if (data.completed) {
+                    clearInterval(interval);
+                    document.getElementById("statusText").innerText = "Completed 🎉";
+                }
+            });
+    }, 1000);
+
+</script>
+
+</body>
+</html>

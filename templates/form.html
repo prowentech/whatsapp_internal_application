@@ -1,122 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Message Sender</title>
-    <style>
-        body {
-            background: linear-gradient(to right, #ffffff, #007BFF);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Campaign Sender</title>
 
-        /* 🔹 Top-right button container */
-        .top-bar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 999;
-        }
+<style>
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    color: #e0e0e0;
+}
 
-        .top-bar button {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+/* Top Bar */
+.top-bar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+}
 
-        .top-bar button:hover {
-            background: #1ebe5d;
-        }
+.top-bar button {
+    background: linear-gradient(45deg, #25D366, #1ebe5d);
+    color: #0f2027;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
 
-        .container {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            width: 350px;
-        }
+.top-bar button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #25D366;
+}
 
-        input, select, button {
-            margin: 10px;
-            padding: 10px;
-            width: 80%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+/* Main Container */
+.container {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 15px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+}
 
-        button {
-            background: #007BFF;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
+.container h2 {
+    margin-bottom: 25px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
 
-        button:hover {
-            background: #0056b3;
-        }
-    </style>
+/* Inputs */
+select, button {
+    margin: 12px 0;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+}
+
+select {
+    background: #1c2b36;
+    color: #e0e0e0;
+}
+
+select:focus {
+    outline: none;
+    box-shadow: 0 0 10px #25D366;
+}
+
+/* Send Button */
+.send-btn {
+    background: linear-gradient(45deg, #007BFF, #00c6ff);
+    color: #0f2027;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px #00c6ff;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: #2a2a2a;
+    color: #bbb;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: #3a3a3a;
+}
+</style>
 </head>
+
 <body>
 
-    <!-- 🔹 Messages Button -->
-    <div class="top-bar">
-        <button onclick="goToMessages()">💬 Messages</button>
-    </div>
+<div class="top-bar">
+    <button onclick="goToMessages()">💬 Messages</button>
+</div>
 
-    <div class="container">
-        <h2>Send WhatsApp Message</h2>
+<div class="container">
+    <h2>Launch WhatsApp Campaign</h2>
 
-        <form action="/upload" method="POST" onsubmit="return validateForm()">
-            <input type="text" id="name" name="name" placeholder="Enter Name (optional)">
-            <input type="text" id="phone" name="phone" placeholder="Enter Phone Number (optional)">
+    <form action="/processing" method="POST">
 
-            <select name="template" required>
-                <option value="" disabled selected>Select Template</option>
-                {% for template in template_names %}
-                    <option value="{{ template }}">{{ template }}</option>
-                {% endfor %}
-            </select>
+        <select name="template" required>
+            <option value="" disabled selected>Select Template</option>
+            {% for template in template_names %}
+                <option value="{{ template }}">{{ template }}</option>
+            {% endfor %}
+        </select>
 
-            <select name="number_count" required>
-                <option value="" disabled selected>Select Status Code</option>
-                {% for i in range(0, 401) %}
-                    <option value="{{ i }}">{{ i }}</option>
-                {% endfor %}
-            </select>
+        <select name="number_count" required>
+            <option value="" disabled selected>Select Status Code</option>
+            {% for i in range(0, 401) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
 
-            <button type="submit">Send Message</button>
+        <button type="submit" class="send-btn">🚀 Send Campaign</button>
 
-            <a href="{{ url_for('logout') }}">
-                <button type="button">Logout</button>
-            </a>
-        </form>
-    </div>
+        <a href="{{ url_for('logout') }}">
+            <button type="button" class="logout-btn">Logout</button>
+        </a>
 
-    <script>
-        function validateForm() {
-            const phone = document.getElementById("phone").value;
-            const count = document.querySelector('select[name="number_count"]').value;
+    </form>
+</div>
 
-            if (!count && (!phone || isNaN(phone) || phone.length !== 10)) {
-                alert("Please select number count or enter a valid 10-digit phone number.");
-                return false;
-            }
-            return true;
-        }
+<script>
+function goToMessages() {
+    window.location.href = "/messages";
+}
+</script>
 
-        function goToMessages() {
-            window.location.href = "/messages";
-        }
-    </script>
 </body>
 </html>

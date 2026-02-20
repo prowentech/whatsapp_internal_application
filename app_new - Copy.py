@@ -31,16 +31,10 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQwHt6RMYB1VQiBdZBvosusM1TFF7tKlTXHNPQeSCs8ta88mF7dscuRu0bZBYWRHkHtkpr5ZBdz48VLeueEN4nN6FykEhQW9veTuzPn3UzUqKzfEvnMqkGHpUqDZATZBnFldy3OXUsNZBtP5w7RQBtqMSLZBva0flf5ByduTk2W2GN6bBkGI6FNDmmBdplNSIhYTMrdcgBrtZC1aZBi4JGn9A4Cu3AVjzGZBKj6c3vUpF73LbACkj8aGcMyDJfFkswLMh1ZCh1pRHYEu0SKz'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQ211uGZBFfTfI6HyqifZAaVMwW9m5eVvfeMIN9nqfzsZAAu1hX9u2JZAkgDr334S4cEZCLvgZAhZBOseSeYPrS82b7ZAA28mLN7ShDOzUlvZBmrHKManDLeVVApxymKknBZBtRxv75ZC0o8Lz7OalXoLInj87HPDSVd9LmF62RAQsjGrUZAQpued2pYDAtmmQNSyR6wYsdGiyLv7GVj7nbnpHAVc8BwztYR3U1y4nZBZC8fQNZCAhqrwaODmxui4HmbxZAiIWDIBoEl5Wny9Pl5ZA'
 PHONE_NUMBER_ID = '987494121114718'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_pricing_insights_trial']
-
-progress_status = {
-    "total": 0,
-    "sent": 0,
-    "completed": False
-}
 
 # User model
 class User(db.Model):
@@ -97,210 +91,126 @@ def get_db_connection():
     )
     return conn
 
-@app.route("/start_sending", methods=["POST"])
-def start_sending():
+@app.route("/upload", methods=["POST"])
+def upload():
+    print("-----")
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    
+    print(request.form)
 
-    data = request.get_json()
-    selected_template = data.get("template")
-    status = data.get("status")
+    selected_template = request.form.get("template")
+    status = request.form.get("number_count")
+    
+    print(selected_template)
+    print(status)
 
-    conn = get_db_connection()
-    cur = conn.cursor()
 
-    cur.execute("""
-        SELECT name, mobile 
-        FROM watzap.hotel_watzap_input 
-        WHERE status_code = %s
-    """, (status,))
-
-    rows = cur.fetchall()
-
-    for name, mobile in rows:
-
-        if not mobile.isdigit() or len(mobile) != 10:
-            cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 500 WHERE mobile = %s"), (mobile,))
-            print("in digit condition")
-            continue
-
-        json_data = {
-            "messaging_product": "whatsapp",
-            "to": f"91{mobile}",
-            "type": "template",
-            "template": {
-                "name": selected_template,
-                "language": {
-                    "code": "en"
-                },
-                "components": [
-                    {
-                        "type": "header",
-                        "parameters": [
-                            {
-                                "type": "image",
-                                "image": {
-                                    "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/PHA_promo.png"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "type": "body",
-                        "parameters": [
-                            {
-                                "type": "text",
-                                "text": name  # {{1}} - recipient name
-                            }
-                        ]
-                    },
-                ]
-            }
-        }
-
-        url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
-        headers = {
-            "Authorization": f"Bearer {ACCESS_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        res = requests.post(url, headers=headers, json=json_data)
-
-        if res.status_code == 200:
-            cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 200 WHERE mobile = %s"), (mobile,))
-        else:
-            cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 400 WHERE mobile = %s"), (mobile,))
-
-        conn.commit()
-
-        progress_status["sent"] += 1
-
-    progress_status["completed"] = True
-    conn.close()
-
-    return jsonify({"status": "started"})
-
-def send_messages_background(selected_template, status):
     try:
-        print("In send messages background")
         conn = get_db_connection()
         cur = conn.cursor()
-        print("status :",status)
-        cur.execute(
-            "SELECT name, mobile FROM watzap.hotel_watzap_input WHERE status_code = %s;",
-            (status,)
-        )
-
+        cur.execute(('SELECT name, mobile FROM watzap.hotel_watzap_input WHERE status_code = %s;'),(status,))
+        
         data = cur.fetchall()
-        # print("data :",data)
+        
+        print(data)
+
         for name, mobile in data:
-            print(name,mobile)
             if not mobile.isdigit() or len(mobile) != 10:
-                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 500 WHERE mobile = %s"), (mobile,))
-                print("in digit condition")
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 500 WHERE mobile = %s"),(mobile,))
                 continue
 
+            # json_data = {
+            #     "messaging_product": "whatsapp",
+            #     "to": f"91{mobile}",
+            #     "type": "template",
+            #     "template": {
+            #         "name": selected_template,
+            #         "language": {
+            #         "code": "en"
+            #         },
+            #         "components": [
+            #         {
+            #             "type": "header",
+            #             "parameters": [
+            #             {
+            #                 "type": "image",
+            #                 "image": {
+            #                 "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/PHA_promo.png"
+            #                 }
+            #             }
+            #             ]
+            #         },
+            #         {
+            #             "type": "body",
+            #             "parameters": [
+            #             {
+            #                 "type": "text",
+            #                 "text": name
+            #             }
+            #             ]
+            #         }
+            #         ]
+            #     }
+            #     }
             json_data = {
-                "messaging_product": "whatsapp",
-                "to": f"91{mobile}",
-                "type": "template",
-                "template": {
-                    "name": selected_template,
-                    "language": {
-                        "code": "en"
-                    },
-                    "components": [
-                        {
-                            "type": "header",
-                            "parameters": [
-                                {
-                                    "type": "image",
-                                    "image": {
-                                        "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/PHA_promo.png"
+                    "messaging_product": "whatsapp",
+                    "to": f"91{mobile}",
+                    "type": "template",
+                    "template": {
+                        "name": selected_template,
+                        "language": {
+                            "code": "en"
+                        },
+                        "components": [
+                            {
+                                "type": "header",
+                                "parameters": [
+                                    {
+                                        "type": "image",
+                                        "image": {
+                                            "link": "https://mediaprobuzz.s3.us-east-1.amazonaws.com/PHA_promo.png"
+                                        }
                                     }
-                                }
-                            ]
-                        },
-                        {
-                            "type": "body",
-                            "parameters": [
-                                {
-                                    "type": "text",
-                                    "text": name  # {{1}} - recipient name
-                                }
-                            ]
-                        },
-                    ]
+                                ]
+                            },
+                            {
+                                "type": "body",
+                                "parameters": [
+                                    {
+                                        "type": "text",
+                                        "text": name  # {{1}} - recipient name
+                                    }
+                                ]
+                            },
+                        ]
+                    }
                 }
-            }
 
             url = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
             headers = {
                 "Authorization": f"Bearer {ACCESS_TOKEN}",
                 "Content-Type": "application/json"
             }
-            print(url)
-            print(headers)
 
             res = requests.post(url, headers=headers, json=json_data)
-            print("response :", res)
-            print("res text :", res.text)
-            if res.status_code == 200:
-                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 200 WHERE mobile = %s"), (mobile,))
-            else:
-                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 400 WHERE mobile = %s"), (mobile,))
-
-            conn.commit()
+            print("response :",res.text)
+            print(res.status_code)
+            print("------------------------------")
             time.sleep(1.5)
-
-        conn.close()
-        return "Success"
+            if res.status_code == 200:
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 200 WHERE mobile = %s"),(mobile,))
+            else:
+                cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 400 WHERE mobile = %s"),(mobile,))
+        
+            conn.commit()
+        
+        return render_template("chat.html")
 
     except Exception as e:
-        print("Error:", e)
-
-@app.route("/progress")
-def progress():
-    return jsonify(progress_status)
-
-@app.route("/processing", methods=["POST"])
-def processing_page():
-
-    if 'user_id' not in session:
-        return redirect(url_for('login_page'))
-
-    selected_template = request.form.get("template")
-    status = request.form.get("number_count")
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # Count total valid numbers
-    cur.execute("""
-        SELECT name, mobile 
-        FROM watzap.hotel_watzap_input 
-        WHERE status_code = %s
-    """, (status,))
-
-    data = cur.fetchall()
-
-    valid_data = [
-        (name, mobile)
-        for name, mobile in data
-        if mobile.isdigit() and len(mobile) == 10 and len(name) > 0
-    ]
-
-    progress_status["total"] = len(valid_data)
-    progress_status["sent"] = 0
-    progress_status["completed"] = False
-
-    conn.close()
-
-    return render_template(
-        "processing.html",
-        template=selected_template,
-        status=status,
-        total=len(valid_data)
-    )
-
+        print(e)
+        print(e.__traceback__.tb_lineno)
+        return f"Failed to process file: {str(e)}", 500
 
 # WhatsApp message sending
 @app.route("/send", methods=["POST"])
