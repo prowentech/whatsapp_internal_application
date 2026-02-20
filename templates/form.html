@@ -17,64 +17,92 @@ body {
     color: #e0e0e0;
 }
 
-/* Top Bar */
+/* Top Navigation */
 .top-bar {
     position: fixed;
     top: 20px;
     right: 20px;
+    display: flex;
+    gap: 12px;
 }
 
 .top-bar button {
-    background: linear-gradient(45deg, #25D366, #1ebe5d);
-    color: #0f2027;
+    padding: 8px 16px;
+    border-radius: 20px;
     border: none;
-    padding: 10px 20px;
-    border-radius: 30px;
     cursor: pointer;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 600;
     transition: 0.3s ease;
 }
 
-.top-bar button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 12px #25D366;
+/* Messages Button */
+.messages-btn {
+    background: linear-gradient(45deg, #25D366, #1ebe5d);
+    color: #0f2027;
 }
 
-/* Main Container */
+.messages-btn:hover {
+    box-shadow: 0 0 12px #25D366;
+    transform: translateY(-2px);
+}
+
+/* Logout Button */
+.logout-btn {
+    background: #2a2a2a;
+    color: #ddd;
+}
+
+.logout-btn:hover {
+    background: #3a3a3a;
+}
+
+/* Center Container */
 .container {
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(18px);
     padding: 40px;
-    border-radius: 15px;
-    width: 380px;
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    border-radius: 16px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: 0 0 30px rgba(0,0,0,0.6);
 }
 
 .container h2 {
-    margin-bottom: 25px;
-    font-weight: 600;
+    text-align: center;
+    margin-bottom: 30px;
     letter-spacing: 1px;
 }
 
-/* Inputs */
-select, button {
-    margin: 12px 0;
-    padding: 12px;
+/* Form Groups */
+.form-group {
     width: 100%;
+    margin-bottom: 18px;
+}
+
+select,
+input,
+button.send-btn {
+    width: 100%;
+    padding: 12px;
     border-radius: 8px;
     border: none;
     font-size: 14px;
+    box-sizing: border-box;
 }
 
-select {
+select,
+input {
     background: #1c2b36;
     color: #e0e0e0;
 }
 
-select:focus {
+select:focus,
+input:focus {
     outline: none;
-    box-shadow: 0 0 10px #25D366;
+    box-shadow: 0 0 12px #25D366;
 }
 
 /* Send Button */
@@ -88,59 +116,77 @@ select:focus {
 
 .send-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 15px #00c6ff;
-}
-
-/* Logout Button */
-.logout-btn {
-    background: #2a2a2a;
-    color: #bbb;
-    cursor: pointer;
-}
-
-.logout-btn:hover {
-    background: #3a3a3a;
+    box-shadow: 0 0 18px #00c6ff;
 }
 </style>
 </head>
 
 <body>
 
+<!-- Top Action Buttons -->
 <div class="top-bar">
-    <button onclick="goToMessages()">💬 Messages</button>
+    <button class="messages-btn" onclick="goToMessages()">💬 Messages</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
 </div>
 
 <div class="container">
     <h2>Launch WhatsApp Campaign</h2>
 
-    <form action="/processing" method="POST">
+    <form action="/processing" method="POST" onsubmit="return validateForm()">
 
-        <select name="template" required>
-            <option value="" disabled selected>Select Template</option>
-            {% for template in template_names %}
-                <option value="{{ template }}">{{ template }}</option>
-            {% endfor %}
-        </select>
+        <div class="form-group">
+            <select name="template" required>
+                <option value="" disabled selected>Select Template</option>
+                {% for template in template_names %}
+                    <option value="{{ template }}">{{ template }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <select name="number_count" required>
-            <option value="" disabled selected>Select Status Code</option>
-            {% for i in range(0, 401) %}
-                <option value="{{ i }}">{{ i }}</option>
-            {% endfor %}
-        </select>
+        <div class="form-group">
+            <input
+                type="text"
+                name="number_count"
+                id="number_count"
+                placeholder="Enter Status Code"
+                maxlength="3"
+                required
+            >
+        </div>
 
-        <button type="submit" class="send-btn">🚀 Send Campaign</button>
-
-        <a href="{{ url_for('logout') }}">
-            <button type="button" class="logout-btn">Logout</button>
-        </a>
+        <div class="form-group">
+            <button type="submit" class="send-btn">
+                🚀 Send Campaign
+            </button>
+        </div>
 
     </form>
 </div>
 
 <script>
+function validateForm() {
+    const input = document.getElementById("number_count");
+    input.value = input.value.replace(/[^0-9]/g, '');
+
+    if (input.value === "") {
+        alert("Status code must be an integer.");
+        return false;
+    }
+    return true;
+}
+
+// Restrict typing to digits
+document.getElementById("number_count").addEventListener("input", function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// Navigation
 function goToMessages() {
     window.location.href = "/messages";
+}
+
+function logout() {
+    window.location.href = "/logout";
 }
 </script>
 

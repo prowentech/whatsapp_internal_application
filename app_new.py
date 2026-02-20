@@ -31,7 +31,7 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQwHt6RMYB1VQiBdZBvosusM1TFF7tKlTXHNPQeSCs8ta88mF7dscuRu0bZBYWRHkHtkpr5ZBdz48VLeueEN4nN6FykEhQW9veTuzPn3UzUqKzfEvnMqkGHpUqDZATZBnFldy3OXUsNZBtP5w7RQBtqMSLZBva0flf5ByduTk2W2GN6bBkGI6FNDmmBdplNSIhYTMrdcgBrtZC1aZBi4JGn9A4Cu3AVjzGZBKj6c3vUpF73LbACkj8aGcMyDJfFkswLMh1ZCh1pRHYEu0SKz'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQ2PYJzlbXHm3Uumkw7QMptqDwrH4NidjMcA4LbAbXTOzZCiCXpmvPuhp9zu1AeGdeGAmdrmo02ig1TSVUSVZBlTGwk9ZC3WzTTDTFLHQZBSlF8PF14ZByM2eLFZClbCehA8FIcURgNCEex5gW0fySBNFsADa1p0qMGMDMpndq3xW3gcbqZBXRZC8t55I8XoRkYeJtlDnMa8gVz1E1HEVq7Diz9F4NjlGfc5DthAU4YQb0WXXPo2nGtm7N3iKrXg0SsP6jxgNh3gLg4z1'
 PHONE_NUMBER_ID = '987494121114718'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_pricing_insights_trial']
@@ -472,6 +472,15 @@ def show_numbers():
 import re
 from datetime import datetime
 
+def get_datetime(item):
+    if "timestamp" in item:
+        # Unix timestamp
+        return datetime.fromtimestamp(item["timestamp"])
+    elif "time" in item:
+        # ISO formatted string
+        return datetime.fromisoformat(item["time"])
+    else:
+        return datetime.min
 
 def combine_and_sort_messages(client_messages, our_messages):
     try:
@@ -483,8 +492,10 @@ def combine_and_sort_messages(client_messages, our_messages):
             epoch = int(item['time'])
             item['time'] = datetime.fromtimestamp(epoch).isoformat()
         combined = our_messages + client_messages
-        # print("combined---->",combined)
-        combined.sort(key=lambda x: datetime.fromisoformat(x["time"]))
+        print("combined---->",combined)
+        # combined.sort(key=lambda x: datetime.fromisoformat(str(x["timestamp"])))
+        combined.sort(key=get_datetime)
+        print(combined)
         return combined
     except Exception as E:
         print(E)
@@ -512,22 +523,24 @@ def show_messages():
         query = """
             SELECT data
             FROM watzap.hotel_webhook_insights
-            WHERE recipient_number = %s
-            ORDER BY id
+            WHERE recipient_number = %s and template_name = 'Replied' ORDER BY id
         """
         cur.execute(query, (recipient_number,))
         rows = cur.fetchall()
 
         for row in rows:
-            print("row ----------",row)
+            # print("row ----------",row)
             payload = json.loads(row[0])
-            print("payload --------",payload)
+            # print("payload --------",payload)
             try:
-                text = (
-                    payload["entry"][0]["changes"][0]
-                    ["value"]["messages"][0]["text"]["body"]
-                )
-                time_stamp = payload["entry"][0]["changes"][0]["value"]["messages"][0]["timestamp"]
+                try:
+                    text = payload["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
+                except:
+                    text = ""
+                try:
+                    time_stamp = payload["entry"][0]["changes"][0]["value"]["messages"][0]["timestamp"]
+                except:
+                    time_stamp = ""
                 messages.append({
                     "text": text,
                     "time":time_stamp,
@@ -537,14 +550,14 @@ def show_messages():
                 print(E)
                 print(E.__traceback__.tb_lineno)
                 pass
-        print("Message list ----------",messages)
+        # print("Message list ----------",messages)
             
             
             
         query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
         cur.execute(query_ours,(recipient_number,))
         rows_ours = cur.fetchall()
-        
+        print("rows_ours :",rows_ours)
         
         our_message = [json.loads(i[0]) for i in rows_ours]
         print("------>",type(rows_ours))

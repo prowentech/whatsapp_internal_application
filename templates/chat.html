@@ -2,140 +2,163 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>WhatsApp UI Clone</title>
+<title>Chat Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  background: #d1d7db;
+  background: #0f172a;
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
 }
 
+/* ===== Layout ===== */
 .app {
   display: flex;
-  height: 100vh;
-  max-width: 1400px;
-  margin: auto;
-  background: #fff;
+  width: 100%;
 }
 
 /* ===== Sidebar ===== */
 .sidebar {
-  width: 30%;
-  border-right: 1px solid #ddd;
-  background: #f0f2f5;
+  width: 28%;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1f2937;
 }
 
 .sidebar-header {
-  padding: 15px;
-  background: #008069;
-  color: #fff;
-  font-weight: bold;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  background: #0ea5e9;
+  color: #0f172a;
 }
 
 .chat-list {
+  flex: 1;
   overflow-y: auto;
-  height: calc(100vh - 60px);
 }
 
 .chat-item {
-  padding: 12px;
+  padding: 16px;
   cursor: pointer;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #1f2937;
+  transition: 0.2s ease;
 }
 
 .chat-item:hover {
-  background: #e9edef;
+  background: #1f2937;
 }
 
 .chat-item.active {
-  background: #d9fdd3;
+  background: #0ea5e9;
+  color: #0f172a;
   font-weight: 600;
 }
 
 /* ===== Chat Area ===== */
 .chat-area {
-  width: 70%;
+  width: 72%;
   display: flex;
   flex-direction: column;
+  background: #0b1220;
 }
 
+/* Header */
 .chat-header {
-  background: #008069;
-  color: #fff;
-  padding: 15px;
-  font-weight: bold;
+  padding: 20px;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+  font-weight: 600;
 }
 
+/* Messages */
 .messages {
   flex: 1;
-  padding: 20px;
-  background: #efeae2;
+  padding: 30px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .message {
-  max-width: 60%;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border-radius: 8px;
+  max-width: 65%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  margin: 8px 0;
   font-size: 14px;
+  position: relative;
+  line-height: 1.4;
 }
 
 .received {
-  background: #fff;
+  background: #1f2937;
   align-self: flex-start;
+  border-bottom-left-radius: 4px;
 }
 
 .sent {
-  background: #d9fdd3;
+  background: #0ea5e9;
+  color: #0f172a;
   align-self: flex-end;
-  margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
 .message-time {
   font-size: 11px;
-  color: #667781;
+  opacity: 0.6;
   margin-top: 4px;
   text-align: right;
 }
 
+/* Date Separator */
 .date-separator {
   align-self: center;
-  background: #e1f3fb;
-  color: #54656f;
+  background: #1e293b;
+  padding: 6px 14px;
+  border-radius: 12px;
   font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  margin: 10px 0;
+  margin: 12px 0;
+  opacity: 0.7;
 }
 
-/* ===== Input ===== */
+/* ===== Input Area ===== */
 .input-box {
+  padding: 15px 20px;
+  background: #111827;
   display: flex;
-  padding: 10px;
-  background: #f0f2f5;
+  gap: 10px;
+  border-top: 1px solid #1f2937;
 }
 
 .input-box input {
   flex: 1;
-  padding: 10px;
-  border-radius: 20px;
+  padding: 12px 16px;
+  border-radius: 25px;
   border: none;
   outline: none;
+  background: #1f2937;
+  color: #e2e8f0;
 }
 
 .input-box button {
-  margin-left: 10px;
-  padding: 10px 20px;
-  border-radius: 20px;
+  padding: 12px 20px;
+  border-radius: 25px;
   border: none;
-  background: #008069;
-  color: #fff;
   cursor: pointer;
+  background: #0ea5e9;
+  color: #0f172a;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.input-box button:hover {
+  box-shadow: 0 0 15px #0ea5e9;
+  transform: translateY(-2px);
 }
 </style>
 </head>
@@ -146,7 +169,7 @@ body {
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-header">WhatsApp</div>
+    <div class="sidebar-header">Chat Console</div>
     <div class="chat-list">
       {% for chat in chat_list %}
       <div class="chat-item" onclick="openChat('{{ chat }}', this)">
@@ -161,11 +184,13 @@ body {
     <div class="chat-header" id="chatName">Select a chat</div>
 
     <div class="messages" id="messages">
-      <div class="message received">Click a chat to load messages 👋</div>
+      <div class="message received">
+        Choose a conversation to begin.
+      </div>
     </div>
 
     <div class="input-box">
-      <input type="text" id="msgInput" placeholder="Type a message...">
+      <input type="text" id="msgInput" placeholder="Type your message...">
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
@@ -175,7 +200,6 @@ body {
 <script>
 let currentRecipient = "";
 
-/* ===== Load chat ===== */
 function openChat(recipient, element) {
   currentRecipient = recipient;
   document.getElementById("chatName").innerText = recipient;
@@ -194,7 +218,6 @@ function openChat(recipient, element) {
   .then(data => renderMessages(data.messages));
 }
 
-/* ===== Render messages ===== */
 function renderMessages(messages) {
   const msgBox = document.getElementById("messages");
   msgBox.innerHTML = "";
@@ -202,17 +225,8 @@ function renderMessages(messages) {
 
   messages.forEach(msg => {
     const dateObj = new Date(msg.time);
-
-    const dateLabel = dateObj.toLocaleDateString([], {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    });
-
-    const timeLabel = dateObj.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+    const dateLabel = dateObj.toLocaleDateString();
+    const timeLabel = dateObj.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
 
     if (dateLabel !== lastDate) {
       const dateDiv = document.createElement("div");
@@ -236,35 +250,12 @@ function renderMessages(messages) {
   msgBox.scrollTop = msgBox.scrollHeight;
 }
 
-/* ===== Send message ===== */
 function sendMessage() {
   const input = document.getElementById("msgInput");
   const text = input.value.trim();
   if (!text || !currentRecipient) return;
 
-  // 🔥 current time in REQUIRED FORMAT
-  const now = new Date();
-  const isoTime =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0") + "-" +
-    String(now.getDate()).padStart(2, "0") + "T" +
-    String(now.getHours()).padStart(2, "0") + ":" +
-    String(now.getMinutes()).padStart(2, "0") + ":" +
-    String(now.getSeconds()).padStart(2, "0") + "." +
-    String(now.getMilliseconds()).padStart(6, "0");
-
-  const msgBox = document.getElementById("messages");
-
-  const div = document.createElement("div");
-  div.className = "message sent";
-  div.innerHTML = `
-    <div>${text}</div>
-    <div class="message-time">${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
-  `;
-  msgBox.appendChild(div);
-  msgBox.scrollTop = msgBox.scrollHeight;
-
-  input.value = "";
+  const now = new Date().toISOString();
 
   fetch("/send/reply/messages", {
     method: "POST",
@@ -272,9 +263,11 @@ function sendMessage() {
     body: JSON.stringify({
       message: text,
       to_phone: currentRecipient,
-      time: isoTime
+      time: now
     })
   });
+
+  input.value = "";
 }
 </script>
 
