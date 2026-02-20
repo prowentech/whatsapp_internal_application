@@ -31,7 +31,7 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQ2PYJzlbXHm3Uumkw7QMptqDwrH4NidjMcA4LbAbXTOzZCiCXpmvPuhp9zu1AeGdeGAmdrmo02ig1TSVUSVZBlTGwk9ZC3WzTTDTFLHQZBSlF8PF14ZByM2eLFZClbCehA8FIcURgNCEex5gW0fySBNFsADa1p0qMGMDMpndq3xW3gcbqZBXRZC8t55I8XoRkYeJtlDnMa8gVz1E1HEVq7Diz9F4NjlGfc5DthAU4YQb0WXXPo2nGtm7N3iKrXg0SsP6jxgNh3gLg4z1'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQybtM7e5nQt8fOmgmNDbtYjcIldK3SzYJpgflvvxtboYdxvjpPHKinhDxTzYDbgMnN9YYcdSiiS1FqCjZBE3hzgpjfZB3NysmoBHILTbHyYGx7p81YQ3SFTsAb4kTkjJJNDkZAOioKdPm7ZAHnCZBJwrZAAzdaTCxTA9TvZCuP0PIZCu0YfAtKKRwMKqlMRXLeQJmIl1jF3EzrvHns8MfF0GpM2agsDwmBM0BkDQ43WWZBiMhEZCTZCEEe6keu83xorWZCA5cV53OxE9xaPr'
 PHONE_NUMBER_ID = '987494121114718'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_pricing_insights_trial']
@@ -163,7 +163,8 @@ def start_sending():
         }
 
         res = requests.post(url, headers=headers, json=json_data)
-
+        print(res)
+        print(res.text)
         if res.status_code == 200:
             cur.execute(("UPDATE watzap.hotel_watzap_input SET status_code = 200 WHERE mobile = %s"), (mobile,))
         else:
@@ -486,9 +487,7 @@ def show_messages():
 
 
         messages = []
-        
-        
-        
+
         # our_message = [{"text": "Okay! Thank You","time": "2025-05-07T01:38:01.209756","client":False},{"text":"Ok","time": "2025-05-09T03:26:01.209756","client":False}]
         
         query = """
