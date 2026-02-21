@@ -404,8 +404,8 @@ def webhook():
 
             except Exception as E:
                 err = {E:E.__traceback__.tb_lineno}
-                open("error_data.txt","w").write(str(data))
-                open("error_file.txt","w").write(str(err))
+                # open("error_data.txt","w").write(str(data))
+                # open("error_file.txt","w").write(str(err))
                 number =  data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
                 status =  "reply"
                 cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:]),status)
@@ -416,7 +416,7 @@ def webhook():
         print(E)
         print(E.__traceback__.tb_lineno)
         error = {E:E.__traceback__.tb_lineno}
-        open("end_error_file.txt", "w").write(str(error))
+        # open("end_error_file.txt", "w").write(str(error))
         return str(error),400
 
 
