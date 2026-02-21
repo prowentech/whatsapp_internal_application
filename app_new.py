@@ -497,7 +497,7 @@ def show_messages():
         query = """
             SELECT data
             FROM watzap.hotel_webhook_insights
-            WHERE recipient_number = %s and template_name = 'reply' ORDER BY id
+            WHERE recipient_number = %s and message_status = 'reply' ORDER BY id
         """
         cur.execute(query, (recipient_number,))
         rows = cur.fetchall()
@@ -525,9 +525,7 @@ def show_messages():
                 print(E.__traceback__.tb_lineno)
                 pass
         # print("Message list ----------",messages)
-            
-            
-            
+
         query_ours = "SELECT data FROM watzap.test_webhook_insights_prowen WHERE recipient_number = %s ORDER BY id"
         cur.execute(query_ours,(recipient_number,))
         rows_ours = cur.fetchall()
