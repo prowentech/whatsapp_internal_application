@@ -407,9 +407,8 @@ def webhook():
                 # open("error_data.txt","w").write(str(data))
                 # open("error_file.txt","w").write(str(err))
                 number =  data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
-                status =  "reply"
-                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:]),status)
-                
+                reply_status =  "reply"
+                cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:],reply_status))
             conn.commit()
             return "EVENT_RECEIVED", 200
     except Exception as E:
