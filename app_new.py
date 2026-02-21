@@ -1,5 +1,5 @@
 import json
-
+import codecs
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -31,7 +31,7 @@ except OperationalError as e:
     print("❌ Database connection failed!")
     print(e)
 
-ACCESS_TOKEN = 'EAAOiBKgZB5skBQybtM7e5nQt8fOmgmNDbtYjcIldK3SzYJpgflvvxtboYdxvjpPHKinhDxTzYDbgMnN9YYcdSiiS1FqCjZBE3hzgpjfZB3NysmoBHILTbHyYGx7p81YQ3SFTsAb4kTkjJJNDkZAOioKdPm7ZAHnCZBJwrZAAzdaTCxTA9TvZCuP0PIZCu0YfAtKKRwMKqlMRXLeQJmIl1jF3EzrvHns8MfF0GpM2agsDwmBM0BkDQ43WWZBiMhEZCTZCEEe6keu83xorWZCA5cV53OxE9xaPr'
+ACCESS_TOKEN = 'EAAOiBKgZB5skBQ1yHjoRhWvs2tXOWRlB2pZCph5x8CQ3VZAOCkHWZCWmc6QdCB2AmJwI88Nz5i0XhyeHa2RLUp62N15t1XeitBvmjb7PX9bugPV4qvTHDBFLLu94AVDdszoSlW0nvFZAXt5MrXj91FQoqA5nx2PFad9dxMooChatfzqnK7pWXpAzGZC8uZAbMIUaD5oukGzZCSdNHkHfSm3GvPFgafheZAhF6r4Ql0kQZAM1WKiBNWslPtXZCpmqmAGU2n7P37VPnxdjciHLrGYZCW2qqZCas'
 PHONE_NUMBER_ID = '987494121114718'
 VERIFY_TOKEN = 'prowen_secret_key'
 TEMPLATE_NAMES = ['hotel_pricing_insights_trial']
@@ -369,6 +369,9 @@ def logout():
     session.clear()
     return redirect(url_for('login_page'))
 
+
+
+
 # Webhook endpoint
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
@@ -398,12 +401,13 @@ def webhook():
                     cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(200,number[2:]))
                 elif status == 'failed':
                     cur.execute(("UPDATE watzap.hotel_watzap_input SET message_status = %s WHERE message_status = %s"),(400,number[2:]))
-                    
-                
-            except:
+
+            except Exception as E:
+                err = {E:E.__traceback__.tb_lineno}
+                codecs.open("error_data.txt","w",encoding = "utf-8").write(str(data))
+                codecs.open("error_file.txt","w",encoding = "utf-8").write(str(err))
                 number =  data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
                 status =  "reply"
-
                 cur.execute(("INSERT into watzap.hotel_webhook_insights(data,recipient_number,message_status) Values(%s,%s,%s)"),(json.dumps(data),number[2:]),status)
                 
             conn.commit()
