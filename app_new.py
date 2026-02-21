@@ -556,7 +556,6 @@ def send_reply_message():
         message = data.get("message")
         to_phone = data.get("to_phone")
         
-        PHONE_NUMBER_ID = '562935203577701'
 
         payload = {
                     "messaging_product": "whatsapp",
