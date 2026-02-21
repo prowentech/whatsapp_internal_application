@@ -416,6 +416,7 @@ def webhook():
         print(E)
         print(E.__traceback__.tb_lineno)
         error = {E:E.__traceback__.tb_lineno}
+        codecs.open("end_error_file.txt", "w", encoding="utf-8").write(str(error))
         return str(error),400
 
 
